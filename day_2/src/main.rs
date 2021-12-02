@@ -1,5 +1,6 @@
 use std::env;
 use std::io::{stdin, BufRead};
+use std::process::exit;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -72,9 +73,15 @@ fn main() {
 
             match result {
                 Ok(result) => println!("{}", result),
-                Err(err) => eprintln!("Error: {}", err),
+                Err(err) => {
+                    eprintln!("Error: {}", err);
+                    exit(1);
+                }
             }
         }
-        None => println!("Please specify `part-one' or `part-two' as the first argument."),
+        None => {
+            eprintln!("Please specify `part-one' or `part-two' as the first argument.");
+            exit(1);
+        }
     }
 }
