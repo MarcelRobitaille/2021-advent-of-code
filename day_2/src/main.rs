@@ -13,9 +13,6 @@ pub enum AdventError {
 
     #[error("Invalid command `{command:?}'. Expected `part-one' or `part-two'.")]
     InvalidCommand { command: String },
-
-    #[error("")]
-    NoCommand,
 }
 
 fn part_one() -> Result<i32, AdventError> {
