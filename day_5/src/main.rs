@@ -5,6 +5,7 @@ use regex::Regex;
 use std::cmp::max;
 use std::env;
 use std::io::{stdin, BufRead};
+use std::process::exit;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -96,7 +97,7 @@ fn print(a: &Array<i32, Ix2>) {
     }
 }
 
-fn main() -> Result<(), AdventError> {
+fn day_5() -> Result<(), AdventError> {
     let args: Vec<String> = env::args().collect();
     let command = args.get(1).ok_or(AdventError::NoPartArgument)?;
     let question_part = match &command[..] {
@@ -174,4 +175,11 @@ fn main() -> Result<(), AdventError> {
     );
 
     Ok(())
+}
+
+fn main() {
+    day_5().unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        exit(1);
+    });
 }

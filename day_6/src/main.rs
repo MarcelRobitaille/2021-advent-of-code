@@ -1,6 +1,7 @@
 use memoize::memoize;
 use std::env;
 use std::io::{stdin, BufRead};
+use std::process::exit;
 use thiserror::Error;
 
 enum QuestionPart {
@@ -65,7 +66,7 @@ fn part_two(x: i8, i: i32) -> usize {
     }
 }
 
-fn main() -> Result<(), AdventError> {
+fn day_6() -> Result<(), AdventError> {
     let args: Vec<String> = env::args().collect();
     let command = args.get(1).ok_or(AdventError::NoPartArgument)?;
     let question_part = match &command[..] {
@@ -95,4 +96,11 @@ fn main() -> Result<(), AdventError> {
     };
     println!("{}", result);
     Ok(())
+}
+
+fn main() {
+    day_6().unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        exit(1);
+    });
 }
