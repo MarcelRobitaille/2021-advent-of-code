@@ -87,7 +87,6 @@ while q:
             continue
         alt = dist[u] + weights[u]
         # assert w != target
-        if v == target or w == target:
         if alt < dist[v]:
             dist[v] = alt
             prev[v] = u
