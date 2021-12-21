@@ -4,7 +4,7 @@ use regex::Regex;
 use std::cmp::max;
 use std::env;
 use std::io::{stdin, BufRead};
-use std::ops::{Add, AddAssign, RangeInclusive};
+use std::ops::{Add, RangeInclusive};
 use std::process::exit;
 use thiserror::Error;
 
@@ -45,16 +45,38 @@ where
     }
 }
 
-impl<T> AddAssign<Vec2<T>> for Vec2<T>
-where
-    T: Copy + Add<Output = T>,
-{
-    fn add_assign(&mut self, other: Self) {
-        *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        };
+fn launch(
+    target: &Vec2<RangeInclusive<i32>>,
+    initial_velocity: Vec2<i32>,
+) -> Option<Vec<Vec2<i32>>> {
+    // Launch!
+    // Recurse until we detect that we overshot or we hit the target
+
+    fn recurse(
+        target: &Vec2<RangeInclusive<i32>>,
+        pos: Vec2<i32>,
+        velocity: Vec2<i32>,
+    ) -> Option<Vec<Vec2<i32>>> {
+        if target.x.contains(&pos.x) && target.y.contains(&pos.y) {
+            return Some(vec![pos]);
+        }
+
+        if velocity.y < 0 && pos.y < *target.y.start() || pos.x > *target.x.end() {
+            return None;
+        }
+
+        recurse(
+            target,
+            pos + velocity,
+            Vec2 {
+                x: velocity.x - velocity.x.signum(),
+                y: velocity.y - 1,
+            },
+        )
+        .map(|history| history.into_iter().chain(vec![pos]).collect())
     }
+
+    recurse(target, Vec2 { x: 0, y: 0 }, initial_velocity)
 }
 
 fn calc_x_velocity(target: RangeInclusive<i32>) -> i32 {
@@ -128,7 +150,7 @@ fn day_17() -> Result<i32, AdventError> {
     Ok(match question_part {
         QuestionPart::One => {
             // Part one we can calculate pretty easily
-            let mut velocity = Vec2 {
+            let velocity = Vec2 {
                 // Get the x velocity as explained above
                 x: calc_x_velocity(target.x.to_owned()),
                 // Get the y velocity as follows: on the way up, we decelerate by 1 every step,
@@ -137,22 +159,8 @@ fn day_17() -> Result<i32, AdventError> {
                 // Therefore, the highest initial velocity is at the minimum target y below y=0
                 y: -target.y.start() - 1,
             };
-            // Variable to track current position
-            let mut pos = Vec2::<i32> { x: 0, y: 0 };
 
-            // Variable to track history
-            let mut history = Vec::<Vec2<i32>>::from([pos]);
-
-            // Loop till we go too low or hit the target
-            while velocity.y > 0 || pos.y >= *target.y.start() {
-                pos += velocity;
-                velocity.x -= velocity.x.signum();
-                velocity.y -= 1;
-                history.push(pos);
-                if target.x.contains(&pos.x) && target.y.contains(&pos.y) {
-                    break;
-                }
-            }
+            let history = launch(&target, velocity).unwrap();
             print(&history, target);
 
             // In part one, we just return the highest y reached
@@ -160,7 +168,7 @@ fn day_17() -> Result<i32, AdventError> {
         }
 
         // Part two is tricky
-        // I just brute-forced it
+        // I just brute-forced it (takes 0.13 seconds, who cares)
         // At least we can calculate the bounds
         // If x velocity greater than the right edge of the target, we will overshoot
         // If y velocity is smaller than the bottom of the target, we will overshoot
@@ -170,24 +178,15 @@ fn day_17() -> Result<i32, AdventError> {
             *target.y.start()..=max(-*target.y.start() + 1, *target.y.end())
         )
         .map(|(x_initial_velocity, y_initial_velocity)| {
-            let mut velocity = Vec2 {
-                x: x_initial_velocity,
-                y: y_initial_velocity,
-            };
-
-            let mut pos = Vec2::<i32> { x: 0, y: 0 };
-
-            while velocity.y > 0 || pos.y >= *target.y.start() {
-                pos += velocity;
-                velocity.x -= velocity.x.signum();
-                velocity.y -= 1;
-                if target.x.contains(&pos.x) && target.y.contains(&pos.y) {
-                    return true;
-                }
-            }
-            false
+            launch(
+                &target,
+                Vec2 {
+                    x: x_initial_velocity,
+                    y: y_initial_velocity,
+                },
+            )
         })
-        .filter(|x| *x)
+        .filter(|x| x.is_some())
         .count() as i32,
     })
 }
