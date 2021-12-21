@@ -22,12 +22,24 @@ pub enum AdventError {
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
+    #[error(transparent)]
+    Regex(#[from] regex::Error),
+
+    #[error(transparent)]
+    ParseInt(#[from] std::num::ParseIntError),
+
     #[error("Please specify `part-one' or `part-two' as the first argument.")]
     NoPartArgument,
+
+    #[error("Invalid input. Expected `target area: x=<x1>..<x2>, y=<y1>..<y2>'. Found `{line}'.")]
+    InputError { line: String },
+
+    #[error("Uh oh. The calculated optimal launch ({v:?}) misses the target!")]
+    MissedTarget { v: Vec2<i32> },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct Vec2<T> {
+pub struct Vec2<T> {
     x: T,
     y: T,
 }
@@ -132,19 +144,23 @@ fn day_17() -> Result<i32, AdventError> {
     stdin().lock().read_line(&mut input)?;
     let input = input.trim();
 
-    let re = Regex::new(r"target area: x=(-?\d+)\.\.(-?\d+), y=(-?\d+)..(-?\d+)").unwrap();
+    let re = Regex::new(r"target area: x=(-?\d+)\.\.(-?\d+), y=(-?\d+)..(-?\d+)")?;
     let (x1, x2, y1, y2) = re
         .captures(input)
-        .unwrap()
-        .iter()
-        .skip(1)
-        .map(|x| x.unwrap().as_str().parse::<i32>().unwrap())
-        .collect_tuple()
-        .unwrap();
+        .and_then(|captures| {
+            captures
+                .iter()
+                .skip(1)
+                .filter_map(|x| x.map(|x| x.as_str().parse::<i32>()))
+                .collect_tuple()
+        })
+        .ok_or(AdventError::InputError {
+            line: input.to_string(),
+        })?;
 
     let target = Vec2::<RangeInclusive<i32>> {
-        x: x1..=x2,
-        y: y1..=y2,
+        x: x1?..=x2?,
+        y: y1?..=y2?,
     };
 
     Ok(match question_part {
@@ -160,10 +176,12 @@ fn day_17() -> Result<i32, AdventError> {
                 y: -target.y.start() - 1,
             };
 
-            let history = launch(&target, velocity).unwrap();
+            let history =
+                launch(&target, velocity).ok_or(AdventError::MissedTarget { v: velocity })?;
             print(&history, target);
 
             // In part one, we just return the highest y reached
+            // Unwrap because history returned something
             history.into_iter().map(|p| p.y).max().unwrap()
         }
 
