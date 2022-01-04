@@ -28,17 +28,14 @@ pub enum AdventError {
 
 fn split_into_tuple(text: &str, separator: char) -> Option<(&str, &str)> {
     // Split a string into a tuple of strings without the separator
-    match text.find(separator) {
-        None => None,
-        Some(i) => {
-            let (left, right) = text.split_at(i);
-            Some((
-                left,
-                // Remove the separator from the right part
-                &right[1..],
-            ))
-        }
-    }
+    text.find(separator).map(|i| {
+        let (left, right) = text.split_at(i);
+        (
+            left,
+            // Remove the separator from the right part
+            &right[1..],
+        )
+    })
 }
 
 fn partition_one<F: Fn(&Digit) -> bool>(
