@@ -3,7 +3,7 @@ use ndarray::prelude::*;
 use ndarray::{Array, ShapeError};
 use std::collections::{HashSet, VecDeque};
 use std::env;
-use std::io::{stdin, BufRead};
+use std::io::{stdin, Read};
 use std::process::exit;
 use thiserror::Error;
 
@@ -105,22 +105,8 @@ fn discover_basin(low_point: Point, input: &Array<usize, Ix2>) -> usize {
     basin_size
 }
 
-fn day_9() -> Result<usize, AdventError> {
-    let args: Vec<String> = env::args().collect();
-    let command = args.get(1).ok_or(AdventError::NoPartArgument)?;
-    let question_part = match &command[..] {
-        "part-one" => Ok(QuestionPart::One),
-        "part-two" => Ok(QuestionPart::Two),
-        _ => Err(AdventError::InvalidCommand {
-            command: args[1].to_string(),
-        }),
-    }?;
-
-    let input = stdin()
-        .lock()
-        .lines()
-        .map(|l| l.map_err(AdventError::Io))
-        .collect::<Result<Vec<_>, AdventError>>()?;
+fn solve(input: &str, question_part: QuestionPart) -> Result<usize, AdventError> {
+    let input = input.trim().split('\n').collect::<Vec<_>>();
     let width = input.get(0).ok_or(AdventError::InvalidInput)?.len();
     let height = input.len();
 
@@ -177,6 +163,23 @@ fn day_9() -> Result<usize, AdventError> {
     })
 }
 
+fn day_9() -> Result<usize, AdventError> {
+    let args: Vec<String> = env::args().collect();
+    let command = args.get(1).ok_or(AdventError::NoPartArgument)?;
+    let question_part = match &command[..] {
+        "part-one" => Ok(QuestionPart::One),
+        "part-two" => Ok(QuestionPart::Two),
+        _ => Err(AdventError::InvalidCommand {
+            command: args[1].to_string(),
+        }),
+    }?;
+
+    let mut input = String::new();
+    stdin().lock().read_to_string(&mut input)?;
+
+    solve(&input, question_part)
+}
+
 fn main() {
     match day_9() {
         Ok(answer) => println!("{}", answer),
@@ -184,5 +187,29 @@ fn main() {
             eprintln!("{}", err);
             exit(1);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const INPUT: &str = "2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+";
+
+    #[test]
+    fn test_part_one() -> Result<(), AdventError> {
+        assert_eq!(solve(INPUT, QuestionPart::One)?, 15);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_two() -> Result<(), AdventError> {
+        assert_eq!(solve(INPUT, QuestionPart::Two)?, 1134);
+        Ok(())
     }
 }
