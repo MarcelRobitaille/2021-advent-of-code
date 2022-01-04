@@ -53,14 +53,6 @@ fn print(a: &Array<usize, Ix2>) {
     }
 }
 
-fn enque_if_not_visited(point: Point, q: &mut VecDeque<Point>, visited: &HashSet<Point>) {
-    // Helper function to add a point to the queue only if it hasn't been visited
-    // Cleans up the BFS algorithm which has to do this for all 4 directions
-    if !visited.contains(&point) {
-        q.push_back(point);
-    }
-}
-
 fn discover_basin(low_point: Point, input: &Array<usize, Ix2>) -> usize {
     // Discover the size of a basin using something similar to BFS
 
@@ -75,9 +67,7 @@ fn discover_basin(low_point: Point, input: &Array<usize, Ix2>) -> usize {
 
         let mut vis = Array2::<usize>::zeros((height, width)).reversed_axes();
 
-        while !q.is_empty() {
-            let (x, y) = q.pop_front().unwrap();
-
+        while let Some((x, y)) = q.pop_front() {
             if *input.get((x, y)).unwrap() == 9 || visited.contains(&(x, y)) {
                 continue;
             }
@@ -87,16 +77,16 @@ fn discover_basin(low_point: Point, input: &Array<usize, Ix2>) -> usize {
             *vis.get_mut((x, y)).unwrap() = *input.get((x, y)).unwrap();
 
             if x > 0 {
-                enque_if_not_visited((x - 1, y), &mut q, &visited);
+                q.push_back((x - 1, y));
             }
             if x + 1 < width {
-                enque_if_not_visited((x + 1, y), &mut q, &visited);
+                q.push_back((x + 1, y));
             }
             if y > 0 {
-                enque_if_not_visited((x, y - 1), &mut q, &visited);
+                q.push_back((x, y - 1));
             }
             if y + 1 < height {
-                enque_if_not_visited((x, y + 1), &mut q, &visited);
+                q.push_back((x, y + 1));
             }
         }
         print(&vis.reversed_axes());
