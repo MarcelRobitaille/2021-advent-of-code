@@ -339,10 +339,7 @@ Therefore, I filter out cuboids with negative volumes.
 For example, in the left image below,
 subtracting B from A will result in the 6 non-intersecting cuboids
 "left", "right", "front", "back", "top", and "bottom".
-<p float="left" align="middle">
-	<img src="./day_22/images/before.png" width="40%" />
-	<img src="./day_22/images/after.png" width="45%" />
-</p>
+![3D representation of boolean subtraction of 2 cuboids](./day_22/images/combined.png)
 
 This problem took me a very long time.
 First of all, the cuboids do not follow intuition.
